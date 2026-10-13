@@ -79,7 +79,7 @@ The database will enforce permissions so customers can access their own requests
 
 ## 🗺️ Development Roadmap
 
-- [ ] **Phase 1 — Foundation:** Expo, TypeScript, navigation, project structure, and Supabase setup.
+- [✅] **Phase 1 — Foundation:** Expo, TypeScript, navigation, project structure, and Supabase setup.
 - [ ] **Phase 2 — Authentication:** User sessions, customer/provider roles, and onboarding.
 - [ ] **Phase 3 — Customer workflow:** Service discovery, request creation, photos, and history.
 - [ ] **Phase 4 — Provider workflow:** Job discovery, acceptance, and assigned jobs.
