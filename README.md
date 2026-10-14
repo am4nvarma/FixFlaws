@@ -1,7 +1,7 @@
 # FixFlaw's 🚀
 ### Local Services, Made Simple
 
-FixFlow is a React Native mobile app concept that connects people who need local services with professionals who can provide them. Customers can post service requests, while providers can discover available jobs, accept requests, and update their progress until completion.
+FixFlaw's is a React Native mobile app concept that connects people who need local services with professionals who can provide them. Customers can post service requests, while providers can discover available jobs, accept requests, and update their progress until completion.
 
 The goal is to build a practical, end-to-end marketplace that demonstrates real-world mobile development, backend integration, authentication, database security, state management, and production-ready engineering practices.
 
