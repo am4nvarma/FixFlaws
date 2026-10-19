@@ -1,7 +1,7 @@
 // imports
 import { supabase } from "../../lib/supabase"
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Button, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, Button, FlatList, Text, View, RefreshControl } from "react-native";
 
 // Interfaces (outside the components)
 interface Job {
@@ -17,7 +17,7 @@ export default function Jobs() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    // const [refreshing, setRefreshing] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
  // helper functions
 
     const fetchJobs = async () => {
@@ -46,7 +46,16 @@ export default function Jobs() {
             setLoading(false)
          }
          };
-    // 6 Effects (to call the function)
+   
+         const onRefresh = async ()=> {
+            setRefreshing(true);
+            await fetchJobs();
+            setRefreshing(false)
+         }
+
+
+
+         // 6 Effects (to call the function)
     useEffect(() => {
         fetchJobs();
     }, []);
@@ -75,16 +84,36 @@ export default function Jobs() {
             <FlatList
             data={jobs}
             // keyExtractor is required so React knows how to track each item
+            refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
+            }
             keyExtractor={(item) => (item.id)}
             renderItem={({ item }) => (
-                <View>
-                    <Text>{item.description}</Text>
-                    <Text>{item.status}</Text>
-                </View>
+                <View style={{
+                    padding: 16, 
+                    marginHorizontal: 16, 
+                    marginTop: 12, 
+                    backgroundColor: '#fff', 
+                    borderRadius: 8,
+                    shadowColor: '#000',
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2
+                }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}>{item.title}</Text>
+                    <Text style={{ color: '#555', marginBottom: 8 }}>{item.description}</Text>
+                    <View style={{ backgroundColor: '#e0f7fa', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start' }}>
+                    <Text style={{ color: '#006064', fontWeight: '600', fontSize: 12 }}>{item.status}</Text>                
+                    </View>
+                    </View>
             )}
                 // If jobs is empty, FlatList will show this instead of a blank screen
                 ListEmptyComponent={
-                    <View>
+                    <View style={{ backgroundColor: '#e0f7fa', 
+                    paddingHorizontal: 8,
+                    paddingVertical: 4, 
+                    borderRadius: 4, 
+                    alignSelf: 'flex-start' }}>
                         <Text> No Jobs Available</Text>
                     </View>
                 }
