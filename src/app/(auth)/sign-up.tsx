@@ -12,11 +12,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "expo-router";
 import { authSchema } from "../../lib/validations";
+import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { is } from "zod/v4/locales";
 
 // Infer the TypeScript type from the Zod schema automatically
 type AuthFormData = z.infer<typeof authSchema>;
 
 export default function SignUp() {
+  const [isLoading, setIsLoading] = useState(false);
   // 1. Set up the form
   const {
     control,
@@ -28,9 +32,24 @@ export default function SignUp() {
   });
 
   // 2. This runs ONLY when validation passes
-  const onSubmit = (data: AuthFormData) => {
-    console.log("Form is valid, ready to send to Supabase:", data);
-    alert(`Success!\nEmail: ${data.email}\nPassword: ${data.password}`);
+  const onSubmit = async (data: AuthFormData) => {
+    setIsLoading(true);
+    // Call Supabase Auth
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      // Show the error from Supabase (e.g., "User already registered")
+      alert(error.message);
+    } else {
+      // success
+      alert("Account created! Please check your email to verify your account.");
+      // Later, we will route them to the login screen or the app here
+    }
   };
 
   return (
@@ -122,6 +141,7 @@ export default function SignUp() {
                 marginBottom: 4,
                 borderRadius: 8,
                 fontSize: 16,
+                color: "black",
               }}
               onBlur={onBlur}
               onChangeText={onChange}
@@ -141,16 +161,21 @@ export default function SignUp() {
         {/* SUBMIT BUTTON */}
         <TouchableOpacity
           onPress={handleSubmit(onSubmit)}
-          style={{
-            backgroundColor: "#006064",
-            padding: 16,
-            borderRadius: 8,
-            alignItems: "center",
-          }}
+          disabled={isLoading}
+          activeOpacity={0.8}
         >
-          <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
-            Sign Up
-          </Text>
+          <View
+            style={{
+              backgroundColor: isLoading ? "#ccc" : "#006064",
+              padding: 16,
+              borderRadius: 8,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
+              {isLoading ? "Creating Account..." : "Sign Up"}
+            </Text>
+          </View>
         </TouchableOpacity>
 
         {/* GO TO LOGIN LINK */}
