@@ -34,6 +34,15 @@ export default function TabLayout(){
                 )
             }} 
                 />
+
+                <Tabs.Screen name="create-job" options={{
+                    title:"Post A Job",
+                    headerTitleAlign:"center",
+                    tabBarIcon: ({ color, focused}) => (
+                        <Ionicons name={ focused ? "bug-sharp" : "bug-outline" }
+                        color={color} size= {25} />
+                    )
+                }} />
         </Tabs>
     )
 }
