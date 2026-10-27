@@ -58,6 +58,7 @@ export default function CreateJob() {
     onSuccess: () => {
       // Tell React Query to Refresh the 'jobs' list because we just added one!
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ['my-jobs', ] }); 
       Alert.alert("Success", "Job Posted Successfully!");
       router.back(); // to go back to jobs feed
     },
