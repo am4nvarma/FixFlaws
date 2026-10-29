@@ -1,6 +1,14 @@
-import { z } from 'zod'
+import { z } from "zod";
 
-export const authSchema = z.object ({
-    email: z.string().email('please enter a valid email'),
-    password: z.string().min(6, "password must be atleast 6 characters")
-})
+// Used for logging in (no role needed)
+export const signInSchema = z.object({
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+// Used for signing up (role is REQUIRED)
+export const signUpSchema = z.object({
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    role: z.enum(['customer', 'provider']), 
+});

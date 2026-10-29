@@ -3,30 +3,32 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 
 export function useAuthListener() {
-  // 1. Grab the new setUser function from Zustand
-  const { setUser, setRole, logout } = useAuthStore();
+  const { setUser, setRole, logout, setInitializing } = useAuthStore();
 
   useEffect(() => {
-    // 2. Check for an active session when the app loads
+    const fetchUserRole = async (userId: string) => {
+        const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
+        if (data) setRole(data.role as 'customer' | 'provider');
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setUser(session.user); // <--- Save the actual user object (contains ID, email)
-        setRole('customer');   // Temporary: we will make this dynamic later
+        setUser(session.user);
+        fetchUserRole(session.user.id);
       }
+      // We are done checking! Turn off the loading screen.
+      setInitializing(false); // <--- ADD THIS
     });
 
-    // 3. Listen for auth changes (login, logout, token refresh)
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setUser(session.user); // <--- Save the user on login
-        setRole('customer'); 
+        setUser(session.user);
+        fetchUserRole(session.user.id);
       } else {
-        logout(); // <--- Clears user and role on logout
+        logout();
       }
     });
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, [setUser, setRole, logout]); // Added dependency to update The Tabs
+    return () => authListener.subscription.unsubscribe();
+  }, [setUser, setRole, logout, setInitializing]);
 }
