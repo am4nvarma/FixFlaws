@@ -10,45 +10,50 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "expo-router";
-import { authSchema } from "../../lib/validations";
+import { Link, useRouter } from "expo-router"; // Added useRouter
+import { signUpSchema } from "../../lib/validations";
 import { supabase } from "@/lib/supabase";
 import { useState } from "react";
-import { is } from "zod/v4/locales";
 
-// Infer the TypeScript type from the Zod schema automatically
-type AuthFormData = z.infer<typeof authSchema>;
+type AuthFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
-  // 1. Set up the form
+  const router = useRouter(); // Initialize router
+
   const {
     control,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
-    defaultValues: { email: "", password: "" },
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { email: "", password: "", role: "customer" },
   });
 
-  // 2. This runs ONLY when validation passes
+  const selectedRole = watch("role");
+
   const onSubmit = async (data: AuthFormData) => {
     setIsLoading(true);
-    // Call Supabase Auth
-    const { data: authData, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: {
+        data: {
+          role: data.role,
+        },
+      },
     });
 
     setIsLoading(false);
 
     if (error) {
-      // Show the error from Supabase (e.g., "User already registered")
       alert(error.message);
-    } else {
-      // success
-      alert("Account created! Please check your email to verify your account.");
-      // Later, we will route them to the login screen or the app here
+    } else { 
+     router.replace("/sign-in");
+     supabase.auth.signOut();
+      alert("Account created successfully! Please sign in.");
     }
   };
 
@@ -64,29 +69,45 @@ export default function SignUp() {
           padding: 24,
         }}
       >
-        <Text
-          style={{
-            fontSize: 32,
-            fontWeight: "bold",
-            marginBottom: 8,
-            color: "#333",
-          }}
-        >
+        <Text style={{ fontSize: 32, fontWeight: "bold", marginBottom: 8, color: "#333" }}>
           Create Account
         </Text>
         <Text style={{ fontSize: 16, color: "#666", marginBottom: 32 }}>
           Join FixFlaws to get started.
         </Text>
 
-        {/* EMAIL INPUT */}
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "600",
-            marginBottom: 6,
-            color: "#333",
-          }}
-        >
+        <Text style={{ fontSize: 14, fontWeight: "600", marginBottom: 6, color: "#333" }}>
+          I want to...
+        </Text>
+        <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
+          <TouchableOpacity
+            onPress={() => setValue("role", "customer")}
+            style={{
+              flex: 1, padding: 12, borderWidth: 2,
+              borderColor: selectedRole === "customer" ? "#006064" : "#ccc",
+              borderRadius: 8, alignItems: "center",
+            }}
+          >
+            <Text style={{ fontWeight: "bold", color: selectedRole === "customer" ? "#006064" : "#666" }}>
+              Hire Help
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setValue("role", "provider")}
+            style={{
+              flex: 1, padding: 12, borderWidth: 2,
+              borderColor: selectedRole === "provider" ? "#006064" : "#ccc",
+              borderRadius: 8, alignItems: "center",
+            }}
+          >
+            <Text style={{ fontWeight: "bold", color: selectedRole === "provider" ? "#006064" : "#666" }}>
+              Find Work
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={{ fontSize: 14, fontWeight: "600", marginBottom: 6, color: "#333" }}>
           Email
         </Text>
         <Controller
@@ -97,10 +118,7 @@ export default function SignUp() {
               style={{
                 borderWidth: 1,
                 borderColor: errors.email ? "red" : "#ccc",
-                padding: 14,
-                marginBottom: 4,
-                borderRadius: 8,
-                fontSize: 16,
+                padding: 14, marginBottom: 4, borderRadius: 8, fontSize: 16, color: "#000"
               }}
               onBlur={onBlur}
               onChangeText={onChange}
@@ -118,15 +136,7 @@ export default function SignUp() {
         )}
         {!errors.email && <View style={{ marginBottom: 16 }} />}
 
-        {/* PASSWORD INPUT */}
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "600",
-            marginBottom: 6,
-            color: "#333",
-          }}
-        >
+        <Text style={{ fontSize: 14, fontWeight: "600", marginBottom: 6, color: "#333" }}>
           Password
         </Text>
         <Controller
@@ -137,11 +147,7 @@ export default function SignUp() {
               style={{
                 borderWidth: 1,
                 borderColor: errors.password ? "red" : "#ccc",
-                padding: 14,
-                marginBottom: 4,
-                borderRadius: 8,
-                fontSize: 16,
-                color: "black",
+                padding: 14, marginBottom: 4, borderRadius: 8, fontSize: 16, color: "#000"
               }}
               onBlur={onBlur}
               onChangeText={onChange}
@@ -158,18 +164,11 @@ export default function SignUp() {
         )}
         {!errors.password && <View style={{ marginBottom: 24 }} />}
 
-        {/* SUBMIT BUTTON */}
-        <TouchableOpacity
-          onPress={handleSubmit(onSubmit)}
-          disabled={isLoading}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity onPress={handleSubmit(onSubmit)} disabled={isLoading} activeOpacity={0.8}>
           <View
             style={{
               backgroundColor: isLoading ? "#ccc" : "#006064",
-              padding: 16,
-              borderRadius: 8,
-              alignItems: "center",
+              padding: 16, borderRadius: 8, alignItems: "center",
             }}
           >
             <Text style={{ color: "#fff", fontSize: 16, fontWeight: "bold" }}>
@@ -178,19 +177,10 @@ export default function SignUp() {
           </View>
         </TouchableOpacity>
 
-        {/* GO TO LOGIN LINK */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            marginTop: 24,
-          }}
-        >
+        {/* FIXED: Changed the link to go to sign-in */}
+        <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24 }}>
           <Text style={{ color: "#666" }}>Already have an account? </Text>
-          <Link
-            href="/sign-up"
-            style={{ color: "#006064", fontWeight: "bold" }}
-          >
+          <Link href="/sign-in" style={{ color: "#006064", fontWeight: "bold" }}>
             Sign In
           </Link>
         </View>

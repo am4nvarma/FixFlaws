@@ -3,29 +3,32 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 
 export function useAuthListener() {
-  const { setRole, logout } = useAuthStore();
+  const { setUser, setRole, logout, setInitializing } = useAuthStore();
 
   useEffect(() => {
-    // 1. Check for an active session when the app loads
+    const fetchUserRole = async (userId: string) => {
+        const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
+        if (data) setRole(data.role as 'customer' | 'provider');
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // For now, let's just set the role to 'customer' temporarily
-        // Later, we will fetch their actual role from a profiles table
-        setRole('customer'); 
+        setUser(session.user);
+        fetchUserRole(session.user.id);
       }
+      // We are done checking! Turn off the loading screen.
+      setInitializing(false); // <--- ADD THIS
     });
 
-    // 2. Listen for auth changes (login, logout, token refresh)
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setRole('customer');
+        setUser(session.user);
+        fetchUserRole(session.user.id);
       } else {
         logout();
       }
     });
 
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    return () => authListener.subscription.unsubscribe();
+  }, [setUser, setRole, logout, setInitializing]);
 }
