@@ -22,7 +22,7 @@ export default function TabLayout() {
     >
       {/* --- TABS VISIBLE TO EVERYONE --- */}
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: "Home Screen",
           headerTitleAlign: "center",
@@ -35,20 +35,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="jobs"
-        options={{
-          title: "Jobs",
-          headerTitleAlign: "center",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "person-sharp" : "person-add-outline"}
-              color={color}
-              size={25}
-            />
-          ),
-        }}
-      />
+      
 
       {/* --- CUSTOMER ONLY TABS --- */}
       <Tabs.Protected guard={role === "customer"}>
@@ -99,7 +86,41 @@ export default function TabLayout() {
             ),
           }}
         />
+
+        <Tabs.Screen
+        name="jobs"
+        options={{
+          title: "Jobs",
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person-sharp" : "person-add-outline"}
+              color={color}
+              size={25}
+            />
+          ),
+        }}
+      />
+      
       </Tabs.Protected>
+
+      
+
+            {/* --- PROFILE TAB (VISIBLE TO EVERYONE) --- */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          headerTitleAlign: "center",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "person-circle" : "person-circle-outline"}
+              color={color}
+              size={25}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
