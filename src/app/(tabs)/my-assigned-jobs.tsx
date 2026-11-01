@@ -39,7 +39,7 @@ export default function MyAssignedJobs() {
       const { data, error } = await supabase
         .from("jobs")
         .select("*")
-        .eq("provider_id", user.id) // <--- THE MAGIC FILTER
+        .eq("provider_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -64,13 +64,32 @@ export default function MyAssignedJobs() {
       if (error) throw error;
     },
     onSuccess: () => {
-      // Refresh all relevant caches
-      queryClient.invalidateQueries({ queryKey: ["jobs"] }); // The main feed
-      queryClient.invalidateQueries({ queryKey: ["my-jobs"] }); // The customer's view
-      queryClient.invalidateQueries({ queryKey: ["my-assigned-jobs"] }); // The provider's view
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["my-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["my-assigned-jobs"] });
     },
     onError: (error) => {
       Alert.alert("Error", "Failed to update job status: " + error.message);
+    },
+  });
+
+  // 3. Mutation to drop job
+  const dropJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      const { error } = await supabase
+        .from("jobs")
+        .update({ status: "Open", provider_id: null })
+        .eq("id", jobId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["my-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["my-assigned-jobs"] });
+      Alert.alert("Dropped", "You have released this job back to the pool.");
+    },
+    onError: (error) => {
+      Alert.alert("Error", "Failed to drop job: " + error.message);
     },
   });
 
@@ -99,7 +118,6 @@ export default function MyAssignedJobs() {
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
         renderItem={({ item }) => {
-          // Determine what button to show based on status
           let actionLabel = "";
           let nextStatus = "";
 
@@ -115,6 +133,10 @@ export default function MyAssignedJobs() {
             updateStatusMutation.isPending &&
             updateStatusMutation.variables?.jobId === item.id;
 
+          // Check if drop mutation is running for this specific job
+          const isDropping =
+            dropJobMutation.isPending && dropJobMutation.variables === item.id;
+
           return (
             <View
               style={{
@@ -122,6 +144,10 @@ export default function MyAssignedJobs() {
                 margin: 16,
                 backgroundColor: "#fff",
                 borderRadius: 8,
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 2,
               }}
             >
               <Text style={{ fontSize: 18, fontWeight: "bold" }}>
@@ -131,6 +157,7 @@ export default function MyAssignedJobs() {
                 {item.description}
               </Text>
 
+              {/* --- THIS IS THE UI SECTION THAT CHANGED --- */}
               <View
                 style={{
                   flexDirection: "row",
@@ -143,38 +170,71 @@ export default function MyAssignedJobs() {
                   Status: {item.status}
                 </Text>
 
-                {/* Show action button if applicable */}
-                {actionLabel !== "" && (
-                  <TouchableOpacity
-                    onPress={() =>
-                      updateStatusMutation.mutate({
-                        jobId: item.id,
-                        newStatus: nextStatus,
-                      })
-                    }
-                    disabled={isUpdating}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: isUpdating ? "#ccc" : "#006064",
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        borderRadius: 6,
-                      }}
+                {/* A row to hold both buttons side-by-side */}
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {/* DROP BUTTON (Only if Accepted) */}
+                  {item.status === "Accepted" && (
+                    <TouchableOpacity
+                      onPress={() => dropJobMutation.mutate(item.id)}
+                      disabled={isDropping}
                     >
-                      <Text
+                      <View
                         style={{
-                          color: "#fff",
-                          fontWeight: "bold",
-                          fontSize: 12,
+                          backgroundColor: "#ffebee",
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 6,
+                          borderWidth: 1,
+                          borderColor: "#ffcdd2",
                         }}
                       >
-                        {isUpdating ? "Updating..." : actionLabel}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
+                        <Text
+                          style={{
+                            color: "#d32f2f",
+                            fontWeight: "bold",
+                            fontSize: 12,
+                          }}
+                        >
+                          {isDropping ? "..." : "Drop"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+
+                  {/* START / COMPLETE BUTTON */}
+                  {actionLabel !== "" && (
+                    <TouchableOpacity
+                      onPress={() =>
+                        updateStatusMutation.mutate({
+                          jobId: item.id,
+                          newStatus: nextStatus,
+                        })
+                      }
+                      disabled={isUpdating}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: isUpdating ? "#ccc" : "#006064",
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 6,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontWeight: "bold",
+                            fontSize: 12,
+                          }}
+                        >
+                          {isUpdating ? "Updating..." : actionLabel}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
+              {/* --- END OF CHANGED SECTION --- */}
             </View>
           );
         }}
