@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/useAuthStore";
+import { Ionicons } from "@expo/vector-icons";
+
 
 interface Job {
   id: string;
@@ -22,7 +24,7 @@ interface Job {
 }
 
 export default function MyAssignedJobs() {
-  const { user } = useAuthStore();
+  const { user, role } = useAuthStore();
   const queryClient = useQueryClient();
 
   // 1. Fetch jobs assigned to THIS provider
@@ -238,11 +240,17 @@ export default function MyAssignedJobs() {
             </View>
           );
         }}
-        ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 50, color: "#888" }}>
-            You haven't accepted any jobs yet.
-          </Text>
-        }
+                        ListEmptyComponent={
+                    <View style={{ alignItems: 'center', marginTop: 80, paddingHorizontal: 20 }}>
+                        <Ionicons name="briefcase-outline" size={60} color="#ccc" />
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#555', marginTop: 16 }}>
+                            No Jobs Yet
+                        </Text>
+                        <Text style={{ fontSize: 14, color: '#888', textAlign: 'center', marginTop: 8 }}>
+                            When you {role === 'customer' ? 'post a job' : 'accept a job'}, it will appear here.
+                        </Text>
+                    </View>
+                }
       />
     </View>
   );

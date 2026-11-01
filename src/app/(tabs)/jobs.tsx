@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../store/useAuthStore";
+import { formatDistanceToNow } from 'date-fns'
 
 // Interfaces
 interface Job {
@@ -110,12 +111,7 @@ export default function Jobs() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           const dateObj = new Date(item.created_at);
-          const formattedDate = dateObj.toLocaleDateString("en-us", {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+          const formattedDate = formatDistanceToNow(dateObj, { addSuffix: true }); 
 
           // Check if this specific job is currently being accepted
           const isAcceptingThisJob =
